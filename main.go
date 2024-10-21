@@ -1,22 +1,24 @@
 package main
 
 import (
-	"github.com/erfanfs10/Blog-Echo/configs"
+	"github.com/erfanfs10/Blog-Echo/db"
 	"github.com/erfanfs10/Blog-Echo/middlewares"
 	"github.com/erfanfs10/Blog-Echo/routes"
+	"github.com/erfanfs10/Blog-Echo/utils"
+	"github.com/go-playground/validator"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/labstack/echo/v4"
 )
 
 func init() {
-	configs.ConnectDb()
+	db.ConnectDb()
 }
 
 func main() {
 
 	e := echo.New()
-
-	defer configs.DB.Close()
+	e.Validator = &utils.CustomValidator{Validator: validator.New()}
+	defer db.DB.Close()
 
 	e.Use(middlewares.SeparateLogs())
 	e.Use(middlewares.CustomLogger())
