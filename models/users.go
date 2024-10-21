@@ -10,27 +10,20 @@ type UserModel struct {
 	IsActive         *bool      `db:"is_active" json:"is_active"`
 	Created          *time.Time `db:"created" json:"created"`
 	Updated          *time.Time `db:"updated" json:"updated"`
-	Firstname        *string    `db:"firstname" json:"firstname"`
-	Lastname         *string    `db:"lastname" json:"lastname"`
-	Gender           *string    `db:"gender" json:"gender"`
-	Phonenumber      *string    `db:"phonenumber" json:"phonenumber"`
-	LoggedIN         *bool      `db:"logged_in" json:"logged_in"`
 	LastLogin        *time.Time `db:"last_login" json:"last_login"`
-	Birthday         *time.Time `db:"birthday" json:"birthday"`
-	Access           *string    `db:"access" json:"access"`
-	Language         *string    `db:"language" json:"language"`
-	Theme            *string    `db:"theme" json:"theme"`
-	About            *string    `db:"about" json:"about"`
 	VerificationCode *string    `db:"verification_code" json:"verification_code"`
 	Avatar           *string    `db:"avatar" json:"avatar"`
-	Password         string     `db:"password" json:"password"`
 }
 
 type CreateUserModel struct {
-	Username string `db:"username" json:"username" form:"username"`
-	Email    string `db:"email" json:"email" form:"email"`
-	IsAdmin  *bool  `db:"is_admin" json:"is_admin" form:"is_admin"`
-	Password string `db:"password" json:"password" form:"password"`
+	Username string `db:"username" json:"username" form:"username" query:"username" validate:"required"`
+	Email    string `db:"email" json:"email" form:"email" query:"email" validate:"required,email"`
+	Password string `db:"password" json:"password" form:"password" query:"password" validate:"min=8,max=12"`
+}
+
+type UserTokenModel struct {
+	User   UserModel  `json:"user"`
+	Tokens TokenModel `json:"tokens"`
 }
 
 type LoginUserModel struct {
