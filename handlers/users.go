@@ -3,58 +3,106 @@ package handlers
 import (
 	"database/sql"
 	"errors"
-	"fmt"
 	"net/http"
+	"strconv"
 
-	"github.com/erfanfs10/Blog-Echo/configs"
+	"github.com/erfanfs10/Blog-Echo/db"
 	"github.com/erfanfs10/Blog-Echo/models"
 	"github.com/erfanfs10/Blog-Echo/utils"
 	"github.com/labstack/echo/v4"
 )
 
 func ListUsers(c echo.Context) error {
-	fmt.Println("in list")
 	users := []models.UserModel{}
-	err := configs.DB.Select(&users, "SELECT * FROM users")
+	err := db.DB.Select(&users, "SELECT id, username,email FROM users")
 	if err != nil {
-		fmt.Println(err)
+		c.Set("err", err.Error())
 		return c.String(http.StatusNotFound, "404")
 	}
 	return c.JSON(http.StatusOK, users)
 }
 
 func GetUser(c echo.Context) error {
-	fmt.Println("in get")
 	p := c.Param("id")
 	user := models.UserModel{}
-	err := configs.DB.Get(&user, "SELECT * FROM users WHERE id=?", p)
+	err := db.DB.Get(&user, "SELECT id, username, email FROM users WHERE id=?", p)
 	if err != nil {
-		fmt.Println(err)
 		if errors.Is(err, sql.ErrNoRows) {
+			c.Set("err", err.Error())
 			return c.String(http.StatusNotFound, "user not found")
 		}
+		c.Set("err", err.Error())
 		return c.String(http.StatusInternalServerError, "something bad happened")
 	}
 	return c.JSON(http.StatusOK, user)
 }
 
-func CreateUser(c echo.Context) error {
-	fmt.Println("in create")
-	user := new(models.CreateUserModel)
-	err := c.Bind(&user)
+func MyUser(c echo.Context) error {
+	userID := c.Get("userID")
+	user := models.UserModel{}
+	err := db.DB.Get(&user, "SELECT id,username,email FROM users WHERE id=?", userID)
 	if err != nil {
-		fmt.Println(err)
-		return c.String(http.StatusBadRequest, "bad request")
+		if errors.Is(err, sql.ErrNoRows) {
+			c.Set("err", err.Error())
+			return c.String(http.StatusNotFound, "user not found")
+		}
+		c.Set("err", err.Error())
+		return c.String(http.StatusInternalServerError, "internal server error")
 	}
 	return c.JSON(http.StatusOK, user)
+}
+
+func CreateUser(c echo.Context) error {
+	createUser := new(models.CreateUserModel)
+	err := c.Bind(createUser)
+	if err != nil {
+		c.Set("err", err.Error())
+		return c.String(http.StatusBadRequest, "bad request")
+	}
+	if err = c.Validate(createUser); err != nil {
+		c.Set("err", err.Error())
+		return c.String(http.StatusBadRequest, "your data is not valid")
+	}
+	hashedPassword, err := utils.HashPassword(createUser.Password)
+	if err != nil {
+		c.Set("err", err.Error())
+		return c.String(http.StatusInternalServerError, "failed generating password")
+	}
+	result, err := db.DB.Exec("INSERT INTO users(username,email,password) values(?,?,?)", createUser.Username, createUser.Email, hashedPassword)
+	if err != nil {
+		c.Set("err", err.Error())
+		return c.String(http.StatusConflict, "can not create user")
+	}
+	lastInsertID, err := result.LastInsertId()
+	if err != nil {
+		c.Set("err", err.Error())
+		return c.String(http.StatusInternalServerError, "failed generating password")
+	}
+	user := models.UserTokenModel{}
+	err = db.DB.Get(&user.User, "SELECT id,username,email FROM users WHERE id=?", strconv.Itoa(int(lastInsertID)))
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			c.Set("err", err.Error())
+			return c.String(http.StatusNotFound, "user not found")
+		}
+		c.Set("err", err.Error())
+		return c.String(http.StatusInternalServerError, "internal server error")
+	}
+	tokens, err := utils.GenerateJWT(int(user.User.ID))
+	if err != nil {
+		c.Set("err", err.Error())
+		return c.String(http.StatusInternalServerError, "error when getting JWT")
+	}
+	user.Tokens = tokens
+	return c.JSON(http.StatusCreated, user)
 }
 
 func Home(c echo.Context) error {
 	userID := c.Get("userID")
 	user := models.UserModel{}
-	err := configs.DB.Get(&user, "SELECT * FROM users WHERE id=?", userID)
+	err := db.DB.Get(&user, "SELECT * FROM users WHERE id=?", userID)
 	if err != nil {
-		fmt.Println(err)
+		c.Set("err", err.Error())
 		if errors.Is(err, sql.ErrNoRows) {
 			return c.String(http.StatusNotFound, "user not found")
 		}
@@ -71,7 +119,8 @@ func LoginAdmin(c echo.Context) error {
 		return c.String(http.StatusBadRequest, "bad reqeust")
 	}
 	var userID int
-	err := configs.DB.Get(&userID, "SELECT id FROM users WHERE username=? AND password=?", user.Username, user.Password)
+	// TODO check hashed password
+	err := db.DB.Get(&userID, "SELECT id FROM users WHERE username=? AND password=?", user.Username, user.Password)
 	if err != nil {
 		c.Set("err", err.Error())
 		if errors.Is(err, sql.ErrNoRows) {
@@ -102,7 +151,7 @@ func RefreshToken(c echo.Context) error {
 	// generate tokens again
 	tokens, err := utils.GenerateJWT(int(userID))
 	if err != nil {
-		fmt.Println(err)
+		c.Set("err", err.Error())
 		return c.String(http.StatusInternalServerError, "error when getting JWT")
 	}
 	return c.JSON(http.StatusOK, tokens)
