@@ -19,8 +19,8 @@ func Register(c echo.Context) error {
 		return utils.HandleError(c, http.StatusBadRequest, err, "bad request")
 	}
 	// validate request data
-	if err = c.Validate(createUser); err != nil {
-		return utils.HandleError(c, http.StatusBadRequest, err, "invalid data")
+	if err := c.Validate(createUser); err != nil {
+		return utils.HandleError(c, http.StatusBadRequest, err, "validation failed")
 	}
 	// hashing the password
 	hashedPassword, err := utils.HashPassword(createUser.Password)
