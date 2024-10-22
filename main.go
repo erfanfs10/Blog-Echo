@@ -5,7 +5,6 @@ import (
 	"github.com/erfanfs10/Blog-Echo/middlewares"
 	"github.com/erfanfs10/Blog-Echo/routes"
 	"github.com/erfanfs10/Blog-Echo/utils"
-	"github.com/go-playground/validator"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/labstack/echo/v4"
 )
@@ -17,7 +16,7 @@ func init() {
 func main() {
 
 	e := echo.New()
-	e.Validator = &utils.CustomValidator{Validator: validator.New()}
+	e.Validator = utils.CreateCustomValidator()
 	defer db.DB.Close()
 
 	e.Use(middlewares.SeparateLogs())
