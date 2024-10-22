@@ -3,7 +3,6 @@ module github.com/erfanfs10/Blog-Echo
 go 1.22.4
 
 require (
-	github.com/go-playground/validator v9.31.0+incompatible
 	github.com/go-playground/validator/v10 v10.22.1
 	github.com/go-sql-driver/mysql v1.8.1
 	github.com/golang-jwt/jwt/v5 v5.2.1
@@ -28,5 +27,4 @@ require (
 	golang.org/x/sys v0.25.0 // indirect
 	golang.org/x/text v0.18.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
-	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
 )
