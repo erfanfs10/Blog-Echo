@@ -24,8 +24,8 @@ func main() {
 	e.Use(middlewares.CustomLogger())
 	// e.Use(middleware.Recover())
 
+	routes.AuthRoutes(e.Group("/auth/"))
 	routes.UserRoutes(e.Group("/user/"))
-	routes.UserRoutesAdmin(e.Group("/admin/"))
 
 	e.Logger.Fatal(e.Start(":1323"))
 
