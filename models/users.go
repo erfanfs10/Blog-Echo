@@ -30,3 +30,8 @@ type LoginUserModel struct {
 	Username string `json:"username" form:"username" query:"username"`
 	Password string `json:"password" form:"password" query:"password"`
 }
+
+type ValidateLoginUserModel struct {
+	ID       int32  `db:"id" json:"id"`
+	Password string `dg:"password" json:"password"`
+}
