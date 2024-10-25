@@ -98,7 +98,7 @@ func RefreshToken(c echo.Context) error {
 		return utils.HandleError(c, http.StatusBadRequest, err, "invalid refresh token")
 	}
 	// generate tokens again
-	tokens, err := utils.GenerateJWT(int(userID))
+	tokens, err := utils.GenerateJWT(userID)
 	if err != nil {
 		return utils.HandleError(c, http.StatusInternalServerError, err, "internal server error")
 	}

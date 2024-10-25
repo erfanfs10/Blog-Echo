@@ -12,8 +12,8 @@ func Authenticate() echo.MiddlewareFunc {
 			if token == "" {
 				return echo.ErrUnauthorized
 			}
-			isValid, userID := utils.ValidateAccessToken(token[7:])
-			if !isValid {
+			userID, err := utils.ValidateAccessToken(token[7:])
+			if err != nil {
 				return echo.ErrUnauthorized
 			}
 			c.Set("userID", userID)
