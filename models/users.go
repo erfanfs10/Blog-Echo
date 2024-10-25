@@ -14,24 +14,3 @@ type UserModel struct {
 	VerificationCode *string    `db:"verification_code" json:"verification_code"`
 	Avatar           *string    `db:"avatar" json:"avatar"`
 }
-
-type CreateUserModel struct {
-	Username string `db:"username" json:"username" form:"username" query:"username" validate:"required"`
-	Email    string `db:"email" json:"email" form:"email" query:"email" validate:"required,email"`
-	Password string `db:"password" json:"password" form:"password" query:"password" validate:"min=8,max=12"`
-}
-
-type UserTokenModel struct {
-	User   UserModel  `json:"user"`
-	Tokens TokenModel `json:"tokens"`
-}
-
-type LoginUserModel struct {
-	Username string `json:"username" form:"username" query:"username"`
-	Password string `json:"password" form:"password" query:"password"`
-}
-
-type ValidateLoginUserModel struct {
-	ID       int32  `db:"id" json:"id"`
-	Password string `dg:"password" json:"password"`
-}
