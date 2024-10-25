@@ -3,6 +3,8 @@ package handlers
 import (
 	"database/sql"
 	"errors"
+	"fmt"
+	"math/rand"
 	"net/http"
 
 	"github.com/erfanfs10/Blog-Echo/db"
@@ -57,14 +59,14 @@ func Register(c echo.Context) error {
 }
 
 func Login(c echo.Context) error {
-	// bind request data to LoginUserModel struct
-	user := new(models.LoginUserModel)
-	if err := c.Bind(user); err != nil {
+	// bind user data to LoginUserModel
+	loginUser := new(models.LoginUserModel)
+	if err := c.Bind(loginUser); err != nil {
 		return utils.HandleError(c, http.StatusInternalServerError, err, "internal server error")
 	}
-	// TODO check hashed password
-	validateLoginUser := models.ValidateLoginUserModel{}
-	err := db.DB.Get(&validateLoginUser, "SELECT id, password FROM users WHERE username=?", user.Username)
+	// get user form db
+	userDB := models.LoginUserModel{}
+	err := db.DB.Get(&userDB, "SELECT id, username,password FROM users WHERE username=?", loginUser.Username)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return utils.HandleError(c, http.StatusUnauthorized, err, "username or password is wrong")
@@ -72,12 +74,12 @@ func Login(c echo.Context) error {
 		return utils.HandleError(c, http.StatusInternalServerError, err, "internal server error")
 	}
 	// validate user password
-	err = utils.CheckHashedPassword(validateLoginUser.Password, user.Password)
+	err = utils.CheckHashedPassword(userDB.Password, loginUser.Password)
 	if err != nil {
 		return utils.HandleError(c, http.StatusUnauthorized, err, "username or password is wrong")
 	}
 	// get tokens for users
-	tokens, err := utils.GenerateJWT(int(validateLoginUser.ID))
+	tokens, err := utils.GenerateJWT(int(userDB.ID))
 	if err != nil {
 		c.Set("err", err.Error())
 		return utils.HandleError(c, http.StatusInternalServerError, err, "internal server error")
@@ -103,4 +105,79 @@ func RefreshToken(c echo.Context) error {
 		return utils.HandleError(c, http.StatusInternalServerError, err, "internal server error")
 	}
 	return c.JSON(http.StatusOK, tokens)
+}
+
+func ForgetPassword(c echo.Context) error {
+	// Bind forgetPasswordEmail to user input
+	email := new(models.EmailModel)
+	if err := c.Bind(email); err != nil {
+		return utils.HandleError(c, http.StatusBadRequest, err, "bad request")
+	}
+	// Get the user form db
+	err := db.DB.Get(&email.Email, "SELECT email FROM users WHERE email=?", email.Email)
+	if err != nil {
+		return utils.HandleError(c, http.StatusOK, err, "email sent")
+	}
+	// Generate verification code
+	verificationCode := rand.Intn(999999)
+	// Generate text message
+	text := fmt.Sprintf("Your verification code is %d", verificationCode)
+	// Update generated verification code to user db
+	_, err = db.DB.Exec("UPDATE users SET verification_code=? WHERE email=?", verificationCode, email.Email)
+	if err != nil {
+		return utils.HandleError(c, http.StatusInternalServerError, err, "internal server error")
+	}
+	// Send email to the user
+	err = utils.SendEmail(email.Email, "Verificatio Code", text)
+	if err != nil {
+		return utils.HandleError(c, http.StatusInternalServerError, err, "failed to send email")
+	}
+	// Return the respose
+	return c.JSON(http.StatusOK, map[string]string{"message": "sent"})
+}
+
+func VerifyPassword(c echo.Context) error {
+	// bind verifyPassword to user input
+	verifyPassword := new(models.VerifyPasswordModel)
+	if err := c.Bind(verifyPassword); err != nil {
+		return utils.HandleError(c, http.StatusBadRequest, err, "bad request")
+	}
+	// validate user input
+	if err := c.Validate(verifyPassword); err != nil {
+		return utils.HandleError(c, http.StatusBadRequest, err, "validation failed")
+	}
+	// get the user from db
+	verificationCode := new(models.VerificationCodeModel)
+	err := db.DB.Get(&verificationCode.VerificationCode, "SELECT verification_code FROM users WHERE email=?", verifyPassword.Email)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return utils.HandleError(c, http.StatusBadRequest, err, "email is not valid")
+		}
+		return utils.HandleError(c, http.StatusInternalServerError, err, "internal server error")
+	}
+	// check if verification codes are the same
+	if verificationCode.VerificationCode != verifyPassword.VerificationCode {
+		return utils.HandleError(c, http.StatusBadRequest, errors.New("validation failed"), "validation failed")
+	}
+	// generate new hashPassword
+	newHashedPassword, err := utils.HashPassword(verifyPassword.NewPassword)
+	if err != nil {
+		return utils.HandleError(c, http.StatusInternalServerError, err, "internal server error")
+	}
+	// update user password
+	result, err := db.DB.Exec("UPDATE users SET password=?, verification_code='' WHERE email=?", newHashedPassword, verifyPassword.Email)
+	if err != nil {
+		return utils.HandleError(c, http.StatusInternalServerError, err, "internal server error")
+	}
+	// get RowsAffected from result
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return utils.HandleError(c, http.StatusInternalServerError, err, "internal server error")
+	}
+	// check if rowsAffected is 0 return error
+	if rowsAffected == 0 {
+		return utils.HandleError(c, http.StatusInternalServerError, err, "internal server error")
+	}
+	// return respose
+	return c.JSON(http.StatusOK, map[string]string{"message": "Your password got updated"})
 }
