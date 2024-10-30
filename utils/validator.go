@@ -1,8 +1,6 @@
 package utils
 
 import (
-	"net/http"
-
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
 )
@@ -27,22 +25,15 @@ func CreateCustomValidator() *CustomValidator {
 }
 
 func CustomValidationError(code int, message string, err error, c echo.Context) error {
-	// Check if the error is a validation error from `go-playground/validator`
-	if _, ok := err.(*validator.InvalidValidationError); ok {
-		return c.JSON(http.StatusInternalServerError, map[string]string{
-			"message": "internal server error",
-		})
-	}
+
 	// Collect validation errors
 	validationErrors := []ValidationError{}
-	ve, ok := err.(validator.ValidationErrors)
-	if ok {
-		for _, fe := range ve {
-			validationErrors = append(validationErrors, ValidationError{
-				Field:   fe.Field(),
-				Message: getCustomMessage(fe), // Get a custom message for the error
-			})
-		}
+	ve, _ := err.(validator.ValidationErrors)
+	for _, fe := range ve {
+		validationErrors = append(validationErrors, ValidationError{
+			Field:   fe.Field(),
+			Message: getCustomMessage(fe), // Get a custom message for the error
+		})
 	}
 	return c.JSON(code, map[string]interface{}{
 		"message": message,
