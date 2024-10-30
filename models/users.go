@@ -14,3 +14,8 @@ type UserModel struct {
 	VerificationCode *string    `db:"verification_code" json:"verification_code"`
 	Avatar           *string    `db:"avatar" json:"avatar"`
 }
+
+type ListUsers struct {
+	Count int         `json:"count"`
+	Users []UserModel `json:"users"`
+}
