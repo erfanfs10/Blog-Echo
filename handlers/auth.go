@@ -81,7 +81,6 @@ func Login(c echo.Context) error {
 	// get tokens for users
 	tokens, err := utils.GenerateJWT(int(userDB.ID))
 	if err != nil {
-		c.Set("err", err.Error())
 		return utils.HandleError(c, http.StatusInternalServerError, err, "internal server error")
 	}
 	// return response
