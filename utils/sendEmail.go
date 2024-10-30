@@ -23,7 +23,7 @@ func SendEmail(userEmail, subject, text string) error {
 	err := e.Send("smtp.gmail.com:587", smtp.PlainAuth(
 		"", myEmail,
 		emailPassword, "smtp.gmail.com"))
-	// Check error message form sending email
+	// Check error message from sending email
 	if err != nil {
 		return err
 	}
