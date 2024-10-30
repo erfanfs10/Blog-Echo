@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"net/http"
+	"strconv"
 
 	"github.com/erfanfs10/Blog-Echo/db"
 	"github.com/erfanfs10/Blog-Echo/models"
@@ -12,12 +13,28 @@ import (
 )
 
 func ListUsers(c echo.Context) error {
+	// get and convert page query param from str to int
+	page, err := strconv.Atoi(c.QueryParam("page"))
+	if err != nil || page < 1 {
+		page = 1
+	}
+	// get and convert page size query param from str to int
+	pageSize, err := strconv.Atoi(c.QueryParam("page_size"))
+	if err != nil || pageSize < 1 {
+		pageSize = 10
+	}
+	// calculate offset
+	offset := (page - 1) * pageSize
 	users := []models.UserModel{}
-	err := db.DB.Select(&users, "SELECT id, username,email FROM users")
+	err = db.DB.Select(&users, "SELECT id, username,email FROM users LIMIT ? OFFSET ?", pageSize, offset)
 	if err != nil {
 		return utils.HandleError(c, http.StatusNotFound, err, "no users found")
 	}
-	return c.JSON(http.StatusOK, users)
+	res := models.ListUsers{
+		Count: len(users),
+		Users: users,
+	}
+	return c.JSON(http.StatusOK, res)
 }
 
 func GetUser(c echo.Context) error {
