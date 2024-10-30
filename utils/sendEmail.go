@@ -9,7 +9,7 @@ import (
 )
 
 func SendEmail(userEmail, subject, text string) error {
-	// get myEmail and emailPassword form .env
+	// get myEmail and emailPassword from .env
 	myEmail := os.Getenv("EMAIL")
 	emailPassword := os.Getenv("EMAIL_PASSWORD")
 	// create email
