@@ -3,7 +3,7 @@ package models
 type CreateUserModel struct {
 	Username string `db:"username" json:"username" form:"username" query:"username" validate:"required"`
 	Email    string `db:"email" json:"email" form:"email" query:"email" validate:"required,email"`
-	Password string `db:"password" json:"password" form:"password" query:"password" validate:"min=8,max=12"`
+	Password string `db:"password" json:"password" form:"password" query:"password" validate:"required,min=8,max=12"`
 }
 
 type UserTokenModel struct {
