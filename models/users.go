@@ -2,12 +2,12 @@ package models
 
 import "time"
 
-type UserModel struct {
+type User struct {
 	ID               int32      `db:"id" json:"id"`
 	Username         string     `db:"username" json:"username"`
 	Email            string     `db:"email" json:"email"`
-	IsAdmin          *bool      `db:"is_admin" json:"is_admin"`
-	IsActive         *bool      `db:"is_active" json:"is_active"`
+	IsAdmin          bool       `db:"is_admin" json:"is_admin"`
+	IsActive         bool       `db:"is_active" json:"is_active"`
 	Created          *time.Time `db:"created" json:"created"`
 	Updated          *time.Time `db:"updated" json:"updated"`
 	LastLogin        *time.Time `db:"last_login" json:"last_login"`
@@ -15,7 +15,15 @@ type UserModel struct {
 	Avatar           *string    `db:"avatar" json:"avatar"`
 }
 
-type ListUsers struct {
-	Count int         `json:"count"`
-	Users []UserModel `json:"users"`
+type UserList struct {
+	Count int    `json:"count"`
+	Users []User `json:"users"`
+}
+
+type UserSearch struct {
+	ID        int32   `db:"id" json:"id"`
+	Username  string  `db:"username" json:"username"`
+	Email     string  `db:"email" json:"email"`
+	Avatar    *string `db:"avatar" json:"avatar"`
+	PostCount *int    `db:"post_count" json:"post_count"`
 }
