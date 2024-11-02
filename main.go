@@ -26,6 +26,7 @@ func main() {
 
 	routes.AuthRoutes(e.Group("/auth/"))
 	routes.UserRoutes(e.Group("/user/"))
+	routes.PostRoutes(e.Group("/post/"))
 
 	e.Logger.Fatal(e.Start(":1323"))
 
