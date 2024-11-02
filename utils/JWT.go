@@ -10,15 +10,17 @@ import (
 )
 
 type jwtCustomClaims struct {
-	UserID    int    `json:"user_id"`
+	UserID    int32  `json:"user_id"`
+	IsActive  bool   `json:"is_active"`
 	TokenType string `json:"token_type"`
 	jwt.RegisteredClaims
 }
 
-func GenerateJWT(userID int) (models.TokenModel, error) {
+func GenerateJWT(userID int32, IsActive bool) (models.TokenModel, error) {
 	// create access token claims
 	accessClaims := &jwtCustomClaims{
 		userID,
+		IsActive,
 		"access",
 		jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 72)),
@@ -27,6 +29,7 @@ func GenerateJWT(userID int) (models.TokenModel, error) {
 	// create refresh token cliams
 	refreshClaims := &jwtCustomClaims{
 		userID,
+		IsActive,
 		"refresh",
 		jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 72)),
@@ -54,7 +57,7 @@ func GenerateJWT(userID int) (models.TokenModel, error) {
 	return tokenModel, nil
 }
 
-func ValidateAccessToken(accessToken string) (int, error) {
+func ValidateAccessToken(accessToken string) (int32, bool, error) {
 	token, err := jwt.ParseWithClaims(accessToken, &jwtCustomClaims{}, func(token *jwt.Token) (interface{}, error) {
 		// Don't forget to validate the alg is what you expect:
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -63,26 +66,25 @@ func ValidateAccessToken(accessToken string) (int, error) {
 		// hmacSampleSecret is a []byte containing your secret, e.g. []byte("my_secret_key")
 		return []byte("My$Super@Secret"), nil
 	})
-
 	if err != nil {
-		return 0, err
+		return 0, false, errors.New("invalid token parse")
 	}
+	// extract the data to jwtCustomClaims struct
 	claims, ok := token.Claims.(*jwtCustomClaims)
-
 	if !ok {
-		return 0, err
+		return 0, false, errors.New("invalid token claims")
 	}
-
+	// check the token type must be access
 	if claims.TokenType != "access" {
-		return 0, err
+		return 0, false, errors.New("invalid token type")
 	}
-	return claims.UserID, nil
+	return claims.UserID, claims.IsActive, nil
 }
 
-func ValidateRefreshToken(refreshToken string) (int, error) {
+func ValidateRefreshToken(refreshToken string) (int32, bool, error) {
 	// parse and validate sent refresh token
 	token, err := jwt.ParseWithClaims(refreshToken, &jwtCustomClaims{}, func(token *jwt.Token) (interface{}, error) {
-		// Don't forget to validate the alg is what you expect:
+		// validate the algorithm
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
@@ -90,16 +92,16 @@ func ValidateRefreshToken(refreshToken string) (int, error) {
 		return []byte("My$Super@Secret"), nil
 	})
 	if err != nil {
-		return 0, err
+		return 0, false, err
 	}
 	// extract the data to jwtCustomClaims struct
 	claims, ok := token.Claims.(*jwtCustomClaims)
 	if !ok {
-		return 0, err
+		return 0, false, err
 	}
 	// check the token type must be refresh
 	if claims.TokenType != "refresh" {
-		return 0, errors.New("invalid refresh token")
+		return 0, false, errors.New("invalid refresh token")
 	}
-	return claims.UserID, nil
+	return claims.UserID, claims.IsActive, nil
 }
