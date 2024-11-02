@@ -7,7 +7,7 @@ import (
 )
 
 func UserRoutes(g *echo.Group) {
-	g.GET("list/", handlers.ListUsers, middlewares.Authenticate())
-	g.POST("my/", handlers.MyUser, middlewares.Authenticate())
-	g.GET(":id/", handlers.GetUser, middlewares.Authenticate())
+	g.GET("list/", handlers.UserList, middlewares.Authenticate())
+	g.GET("my/", handlers.UserMy, middlewares.Authenticate())
+	g.GET("search/:username/", handlers.UserSearch, middlewares.Authenticate())
 }
