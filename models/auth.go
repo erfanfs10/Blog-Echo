@@ -7,12 +7,13 @@ type CreateUserModel struct {
 }
 
 type UserTokenModel struct {
-	User   UserModel  `json:"user"`
+	User   User       `json:"user"`
 	Tokens TokenModel `json:"tokens"`
 }
 
 type LoginUserModel struct {
 	ID       int32  `json:"id" form:"id" query:"id" db:"id"`
+	IsActive bool   `db:"is_active" json:"is_active"`
 	Username string `json:"username" form:"username" query:"username"`
 	Password string `json:"password" form:"password" query:"password"`
 }
@@ -26,8 +27,4 @@ type VerifyPasswordModel struct {
 	VerificationCode string `json:"verification_code" form:"verification_code" query:"verification_code"`
 	NewPassword      string `json:"new_password" form:"new_password" query:"new_password" validate:"min=8,max=12,eqfield=ConfirmPassword"`
 	ConfirmPassword  string `json:"confirm_password" form:"confirm_password" query:"confirm_password" validate:"min=8,max=12"`
-}
-
-type VerificationCodeModel struct {
-	VerificationCode string `json:"verification_code" form:"verification_code" query:"verification_code" db:"verification_code"`
 }
