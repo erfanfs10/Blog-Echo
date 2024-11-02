@@ -1,6 +1,8 @@
 package middlewares
 
 import (
+	"net/http"
+
 	"github.com/erfanfs10/Blog-Echo/utils"
 	"github.com/labstack/echo/v4"
 )
@@ -12,11 +14,12 @@ func Authenticate() echo.MiddlewareFunc {
 			if token == "" {
 				return echo.ErrUnauthorized
 			}
-			userID, err := utils.ValidateAccessToken(token[7:])
+			userID, IsActive, err := utils.ValidateAccessToken(token[7:])
 			if err != nil {
-				return echo.ErrUnauthorized
+				return utils.HandleError(c, http.StatusUnauthorized, err, "Unauthorized")
 			}
 			c.Set("userID", userID)
+			c.Set("isActive", IsActive)
 			return next(c)
 		}
 	}
