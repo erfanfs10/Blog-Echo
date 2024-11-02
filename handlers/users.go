@@ -8,11 +8,12 @@ import (
 
 	"github.com/erfanfs10/Blog-Echo/db"
 	"github.com/erfanfs10/Blog-Echo/models"
+	"github.com/erfanfs10/Blog-Echo/queries"
 	"github.com/erfanfs10/Blog-Echo/utils"
 	"github.com/labstack/echo/v4"
 )
 
-func ListUsers(c echo.Context) error {
+func UserList(c echo.Context) error {
 	// get and convert page query param from str to int
 	page, err := strconv.Atoi(c.QueryParam("page"))
 	if err != nil || page < 1 {
@@ -25,22 +26,22 @@ func ListUsers(c echo.Context) error {
 	}
 	// calculate offset
 	offset := (page - 1) * pageSize
-	users := []models.UserModel{}
-	err = db.DB.Select(&users, "SELECT id, username,email FROM users LIMIT ? OFFSET ?", pageSize, offset)
+	users := []models.User{}
+	err = db.DB.Select(&users, queries.UserList, pageSize, offset)
 	if err != nil {
 		return utils.HandleError(c, http.StatusNotFound, err, "no users found")
 	}
-	res := models.ListUsers{
+	res := models.UserList{
 		Count: len(users),
 		Users: users,
 	}
 	return c.JSON(http.StatusOK, res)
 }
 
-func GetUser(c echo.Context) error {
-	p := c.Param("id")
-	user := models.UserModel{}
-	err := db.DB.Get(&user, "SELECT id, username, email FROM users WHERE id=?", p)
+func UserSearch(c echo.Context) error {
+	p := c.Param("username")
+	user := []models.UserSearch{}
+	err := db.DB.Select(&user, queries.UserSearch, p)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return utils.HandleError(c, http.StatusNotFound, err, "user not found")
@@ -50,10 +51,10 @@ func GetUser(c echo.Context) error {
 	return c.JSON(http.StatusOK, user)
 }
 
-func MyUser(c echo.Context) error {
+func UserMy(c echo.Context) error {
 	userID := c.Get("userID")
-	user := models.UserModel{}
-	err := db.DB.Get(&user, "SELECT id,username,email FROM users WHERE id=?", userID)
+	user := models.User{}
+	err := db.DB.Get(&user, queries.UserMy, userID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return utils.HandleError(c, http.StatusNotFound, err, "user not found")
