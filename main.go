@@ -12,13 +12,16 @@ import (
 func init() {
 	db.ConnectDb()
 	utils.LoadEnv()
+	utils.CreateEmailChannel()
 }
 
 func main() {
 
 	e := echo.New()
 	e.Validator = utils.CreateCustomValidator()
+
 	defer db.DB.Close()
+	defer close(utils.EmailChannel)
 
 	e.Use(middlewares.SeparateLogs())
 	e.Use(middlewares.CustomLogger())
