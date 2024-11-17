@@ -19,7 +19,8 @@ type LoginUserModel struct {
 }
 
 type EmailModel struct {
-	Email string `json:"email" form:"email" query:"email" db:"email"`
+	Email    string `json:"email" form:"email" db:"email"`
+	IsActive bool   `json:"is_active" form:"is_active" db:"is_active"`
 }
 
 type VerifyPasswordModel struct {
@@ -27,4 +28,9 @@ type VerifyPasswordModel struct {
 	VerificationCode string `json:"verification_code" form:"verification_code" query:"verification_code"`
 	NewPassword      string `json:"new_password" form:"new_password" query:"new_password" validate:"min=8,max=12,eqfield=ConfirmPassword"`
 	ConfirmPassword  string `json:"confirm_password" form:"confirm_password" query:"confirm_password" validate:"min=8,max=12"`
+}
+
+type VerificationCodeModel struct {
+	VerificationCode string `json:"verification_code" form:"verification_code" db:"verification_code"`
+	IsActive         bool   `json:"is_active" form:"is_active" db:"is_active"`
 }
