@@ -2,30 +2,51 @@ package utils
 
 import (
 	"fmt"
+	"log"
 	"net/smtp"
 	"os"
 
 	"github.com/jordan-wright/email"
 )
 
-func SendEmail(userEmail, subject, text string) error {
+var EmailChannel chan EmailJob
+
+type EmailJob struct {
+	To      string
+	Subject string
+	Text    string
+}
+
+func CreateEmailChannel() {
+	EmailChannel = make(chan EmailJob)
+	fmt.Println("Channel created")
+	go func() {
+		for job := range EmailChannel {
+			sendEmail(job)
+		}
+	}()
+	fmt.Println("Goroutine started")
+}
+
+func sendEmail(job EmailJob) {
 	// get myEmail and emailPassword from .env
 	myEmail := os.Getenv("EMAIL")
 	emailPassword := os.Getenv("EMAIL_PASSWORD")
 	// create email
 	e := email.NewEmail()
-	from := fmt.Sprintf("Mahdi FarahmandSafa <%v>", myEmail)
+	from := fmt.Sprintf("My Echo Program <%v>", myEmail)
 	e.From = from
-	e.To = []string{userEmail}
-	e.Subject = subject
-	e.Text = []byte(text)
+	e.To = []string{job.To}
+	e.Subject = job.Subject
+	e.Text = []byte(job.Text)
 	// send email
 	err := e.Send("smtp.gmail.com:587", smtp.PlainAuth(
 		"", myEmail,
 		emailPassword, "smtp.gmail.com"))
 	// Check error message from sending email
+	fmt.Println("---------------------------------------------------------")
 	if err != nil {
-		return err
+		log.Printf("Failed to send email to %s: %v", job.To, err)
 	}
-	return nil
+	log.Printf("Email sent successfully to %s", job.To)
 }
