@@ -14,7 +14,7 @@ const (
 	`
 
 	GetEmail = `
-	SELECT email FROM users WHERE email=?
+	SELECT email,is_active FROM users WHERE email=?
 	`
 
 	UpdateVerificationCode = `
@@ -22,7 +22,7 @@ const (
 	`
 
 	GetVerificationCode = `
-	SELECT verification_code FROM users WHERE email=?
+	SELECT verification_code,is_active FROM users WHERE email=?
 	`
 
 	UpdatePassword = `
