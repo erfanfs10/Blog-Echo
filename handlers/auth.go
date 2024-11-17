@@ -75,6 +75,11 @@ func Login(c echo.Context) error {
 		}
 		return utils.HandleError(c, http.StatusInternalServerError, err, "internal server error")
 	}
+	// check if user is active or not
+	if !userDB.IsActive {
+		err := fmt.Errorf("%s is not active", userDB.Username)
+		return utils.HandleError(c, http.StatusForbidden, err, "User is not active")
+	}
 	// validate user password
 	err = utils.CheckHashedPassword(userDB.Password, loginUser.Password)
 	if err != nil {
@@ -125,9 +130,15 @@ func ForgetPassword(c echo.Context) error {
 		return utils.HandleError(c, http.StatusBadRequest, err, "bad request")
 	}
 	// Get the user form db
-	err := db.DB.Get(&email.Email, queries.GetEmail, email.Email)
+	emailDB := models.EmailModel{}
+	err := db.DB.Get(&emailDB, queries.GetEmail, email.Email)
 	if err != nil {
-		return utils.HandleError(c, http.StatusOK, err, "email sent")
+		return utils.HandleError(c, http.StatusInternalServerError, err, "internal server error")
+	}
+	// check if user is active or not
+	if !emailDB.IsActive {
+		err := fmt.Errorf("%s is not active", email.Email)
+		return utils.HandleError(c, http.StatusForbidden, err, "User is not active")
 	}
 	// Generate verification code
 	verificationCode := rand.Intn(999999)
@@ -139,10 +150,8 @@ func ForgetPassword(c echo.Context) error {
 		return utils.HandleError(c, http.StatusInternalServerError, err, "internal server error")
 	}
 	// Send email to the user
-	err = utils.SendEmail(email.Email, "Verificatio Code", text)
-	if err != nil {
-		return utils.HandleError(c, http.StatusInternalServerError, err, "failed to send email")
-	}
+	emailJob := utils.EmailJob{To: email.Email, Subject: "Verificatio Code", Text: text}
+	utils.EmailChannel <- emailJob
 	// Return the respose
 	return c.JSON(http.StatusOK, map[string]string{"message": "sent"})
 }
@@ -157,17 +166,22 @@ func VerifyPassword(c echo.Context) error {
 	if err := c.Validate(verifyPassword); err != nil {
 		return utils.HandleError(c, http.StatusBadRequest, err, "validation failed")
 	}
-	// get the verification code from db
-	var verificationCode string
-	err := db.DB.Get(&verificationCode, queries.GetVerificationCode, verifyPassword.Email)
+	// get the verification code and is active from db
+	verificationCodeDB := models.VerificationCodeModel{}
+	err := db.DB.Get(&verificationCodeDB, queries.GetVerificationCode, verifyPassword.Email)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return utils.HandleError(c, http.StatusBadRequest, err, "email is not valid")
 		}
 		return utils.HandleError(c, http.StatusInternalServerError, err, "internal server error")
 	}
+	// check if user is active or not
+	if !verificationCodeDB.IsActive {
+		err := fmt.Errorf("%s is not active", verifyPassword.Email)
+		return utils.HandleError(c, http.StatusForbidden, err, "User is not active")
+	}
 	// check if verification codes are the same
-	if verificationCode != verifyPassword.VerificationCode {
+	if verificationCodeDB.VerificationCode != verifyPassword.VerificationCode {
 		return utils.HandleError(c, http.StatusBadRequest, nil, "validation failed")
 	}
 	// generate new hashPassword
