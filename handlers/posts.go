@@ -44,10 +44,6 @@ func PostList(c echo.Context) error {
 func PostCreate(c echo.Context) error {
 	// get userID from context
 	userID := c.Get("userID")
-	// check if user is active
-	if isActiveUser := c.Get("isActive"); !isActiveUser.(bool) {
-		return echo.ErrForbidden
-	}
 	// bind user data to PostCreate model
 	postCreate := new(models.PostCreate)
 	err := c.Bind(postCreate)
