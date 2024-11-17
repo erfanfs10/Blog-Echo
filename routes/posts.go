@@ -7,9 +7,11 @@ import (
 )
 
 func PostRoutes(g *echo.Group) {
-	g.GET("my/", handlers.PostMy, middlewares.Authenticate())
-	g.POST("create/", handlers.PostCreate, middlewares.Authenticate())
-	g.PATCH("update/", handlers.PostUpdate, middlewares.Authenticate())
-	g.DELETE("delete/:post-id/", handlers.PostDelete, middlewares.Authenticate())
-	g.GET("list/", handlers.PostList, middlewares.Authenticate())
+	g.GET("my/", handlers.PostMy,
+		middlewares.Authenticate(),
+		middlewares.IsActive())
+	g.POST("create/", handlers.PostCreate, middlewares.Authenticate(), middlewares.IsActive())
+	g.PATCH("update/", handlers.PostUpdate, middlewares.Authenticate(), middlewares.IsActive())
+	g.DELETE("delete/:post-id/", handlers.PostDelete, middlewares.Authenticate(), middlewares.IsActive())
+	g.GET("list/", handlers.PostList, middlewares.Authenticate(), middlewares.IsActive())
 }
