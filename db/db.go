@@ -27,4 +27,6 @@ func ConnectDb() {
 	}
 	fmt.Println("Connected to DB")
 	DB = db
+
+	DB.MustExec(schemas)
 }
