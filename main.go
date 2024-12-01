@@ -11,6 +11,7 @@ import (
 
 func init() {
 	db.ConnectDb()
+	db.CreateTables()
 	utils.LoadEnv()
 	utils.CreateEmailChannel()
 }
