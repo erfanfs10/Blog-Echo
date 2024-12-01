@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"net/smtp"
-	"os"
 
 	"github.com/jordan-wright/email"
 )
@@ -30,8 +29,8 @@ func CreateEmailChannel() {
 
 func sendEmail(job EmailJob) {
 	// get myEmail and emailPassword from .env
-	myEmail := os.Getenv("EMAIL")
-	emailPassword := os.Getenv("EMAIL_PASSWORD")
+	myEmail := GetEnv("EMAIL", "example@gmail.com")
+	emailPassword := GetEnv("EMAIL_PASSWORD", "somePassword")
 	// create email
 	e := email.NewEmail()
 	from := fmt.Sprintf("My Echo Program <%v>", myEmail)
