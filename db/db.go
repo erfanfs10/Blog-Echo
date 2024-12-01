@@ -25,8 +25,17 @@ func ConnectDb() {
 		fmt.Println("Can not connect to DB")
 		log.Fatalln(err)
 	}
-	fmt.Println("Connected to DB")
+	fmt.Println("DB Connected")
 	DB = db
+}
 
-	DB.MustExec(schemas)
+func CreateTables() {
+	for name, query := range createTables {
+		_, err := DB.Exec(query.Query)
+		if err != nil {
+			fmt.Println("Can not create table ", name)
+			log.Fatalln(err)
+		}
+	}
+	fmt.Println("All tables created")
 }
