@@ -31,6 +31,6 @@ func main() {
 	routes.UserRoutes(e.Group("/user/"))
 	routes.PostRoutes(e.Group("/post/"))
 
-	e.Logger.Fatal(e.Start(":1323"))
+	e.Logger.Fatal(e.Start(":8000"))
 
 }
